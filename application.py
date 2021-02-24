@@ -20,10 +20,8 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-DATABASE_URL = "postgres://hytftgbazosiao:3752148e22a105bb480537a6bac55fe96af1f482ae775ceff417f9b757f69e55@ec2-3-222-30-53.compute-1.amazonaws.com:5432/dchhq30k62m71e"
-
-engine = create_engine(DATABASE_URL)
-db = scoped_session(sessionmaker(bind=engine))
+# engine = create_engine(DATABASE_URL)
+# db = scoped_session(sessionmaker(bind=engine))
 
 
 @app.route("/")
