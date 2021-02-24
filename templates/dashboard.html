@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block linkb %}
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.0/socket.io.js"></script>
+	<style type="text/css">
+		.chatbox{
+			margin-right:10px; 
+			margin-left:10px;  
+			margin-bottom: 10%;
+			overflow-y: hidden; 
+			overflow-y: auto;
+			background-color: #DDDDDD; 
+			padding: 20px;  
+		}
+		.postclass{
+			color : black;
+			margin: 10%;
+			width: 80%;
+			padding: 10px;
+
+		}
+		.marginclass{
+			margin-top: 10px; 
+			padding-bottom: 10px;
+		}
+		.messageclassl{
+			width: 70%;
+			padding: 10px;
+			background-color: white;
+			margin-right: 30%;
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+		.messageclassr{
+			width: 70%;
+			padding: 10px;
+			background-color: #28a745;
+			color: white;
+			margin-left: 30%;
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+		.delbutclass{
+			float: right;
+			margin-top: 5px;
+		}
+	</style>
+{% endblock %}
+
+{% block sidebar %}
+<div style="margin-top: 20px;"></div>
+<div style="text-align: center; color: white;"><h3>Create Channel</h3></div>
+<div style="margin-top: 20px;"></div>
+<div style="margin-left: 15px; margin-right: 15px;">
+    		<input class="form-control mr-sm-2" placeholder="Create Channel" id="channelname" name="channelname" type="text" required="required">
+    		<div style="margin-top: 20px;"></div>
+    		<button class="btn btn-outline-light my-2 my-sm-0" id="createchannelid" 
+    		>Create Channel</button>
+</div>
+<div style="margin-top: 20px;"></div>
+<div id="channellist" style="margin: 10px; overflow-y: auto;background-color: white; color: black; ">
+	{% for channel in channellist %}
+		<div class="marginclass">
+			<button class="postclass btn btn-outline-success my-2 my-sm-0">
+			{{ channel }}</button>
+		</div>
+	{% endfor %}
+</div>
+{% endblock %}
+
+{% block bodyheading %}{% endblock %}
+
+{% block body %}
+<div style="position: fixed;width: 80%; height: 100%" >
+	<div class="chatbox" style="height: 75% " id="chatboxlist">
+	</div>
+	<div style="bottom: 10px; position: fixed; 
+	width: 100%; height: 15%;" class="form-inline">
+		<input class="form-control mr-sm-2" type="search" 
+		name="searchdata" id="msgdata" style="width: 50%; margin-left: 10%;">
+    	<button class="btn btn-outline-success my-2 my-sm-0" type="submit" id="sendmsg" style="width: 10%">Send</button>
+	</div>
+</div>
+	
+{% endblock %}
+
+
+{% block script %}
+<script type="text/javascript">
+	document.addEventListener("DOMContentLoaded", () => {
+		var socket = io.connect("http://127.0.0.1:5000");
+		window.scrollTo(0,document.body.scrollHeight);
+
+		socket.on('connect', ()=>{
+			document.querySelector("#createchannelid").onclick = () =>{
+				var channelname = document.querySelector("#channelname").value
+				console.log(channelname);
+				if(channelname.length == 0){
+					return false;
+				}
+				socket.emit("create channel" , {"channelname" : channelname})
+			}
+		})
+		socket.emit('getchatbyname', {"channelname" : localStorage.getItem("lastchan")});
+
+		socket.on('new channel', data =>{
+			var channellist = JSON.parse(data.channellist);
+			document.querySelector("#channellist").innerHTML = "";
+			channellist.forEach(channel =>{
+				var element = document.querySelector("#channellist");
+				var divele = document.createElement('div');
+				var ancele = document.createElement('button');
+				console.log("channel")
+				console.log(channel)
+				ancele.innerHTML = channel ;
+				ancele.className = "postclass btn btn-outline-success my-2 my-sm-0";
+				ancele.value = channel;
+				console.log("hello");
+				console.log(ancele.value);
+				divele.append(ancele);
+				divele.className = "marginclass";
+				element.append(divele);
+			})
+		})
+		document.querySelectorAll('.postclass').forEach(button =>{
+			button.onclick = ()=>{
+				var selectedbtn =  button.innerHTML;
+				// console.log(selectedbtn);
+				selectedbtn = selectedbtn.replace(/\n/g, '');
+				selectedbtn = selectedbtn.replace(/\t/g, '');
+				console.log(selectedbtn);
+				localStorage.setItem("lastchan", selectedbtn);
+				socket.emit('getchatbyname', {"channelname" : selectedbtn});
+			}
+		})
+
+		socket.on('chatofchannel', chatdata =>{
+			var chatdata = JSON.parse(chatdata.channelchat);
+			var userdata = '{{ username }}'
+			console.log(userdata)
+			var intodiv = document.querySelector("#chatboxlist");
+			intodiv.innerHTML = "";
+			chatdata.forEach(data =>{
+				var divele = document.createElement('div');
+				if (userdata == data[1]){
+					divele.className = "messageclass"+ "r" + " btn-outline-success";
+					var delbut = document.createElement('button');
+					delbut.innerHTML = "del";
+					delbut.className = "delbutclass";
+					delbut.value = data[2];
+					delbut.onclick = delbutfunc;
+					divele.append(delbut);
+				}
+				else{
+					divele.className = "messageclass"+ "l" + " btn-outline-success";
+				}
+				var e1 = document.createElement('p');
+				e1.innerHTML = data[1] ;
+				var e2 = document.createElement('h5');
+				e2.innerHTML = data[0] ;
+				var e3 = document.createElement('p');
+				e3.innerHTML = data[2] ;
+				e3.style = "text-align: right;"
+				divele.append(e1);
+				divele.append(e2);
+				divele.append(e3);
+				intodiv.append(divele);
+			})
+		})
+
+		document.querySelector("#sendmsg").onclick = () =>{
+			var msgdata = document.querySelector("#msgdata");
+			var msgvalue = msgdata.value;
+			msgdata.value = "";
+			socket.emit("msg client", 
+				{"msgdata" : msgvalue,"channelname" : localStorage.getItem("lastchan")});
+		}
+
+		function delbutfunc(){
+			socket.emit('delmessage', {'chattodel': this.value, 'channelname' :localStorage.getItem("lastchan")});
+			console.log(this.value)
+		}
+
+		socket.on('sendtoall', data =>{
+			var channelname = data.channelname;
+			if(channelname == localStorage.getItem('lastchan')){
+				socket.emit('getchatbyname', {"channelname" : localStorage.getItem("lastchan")});
+			}
+			else{
+				console.log("not for you");
+			}
+
+		})
+
+	} )
+</script>
+{% endblock %}

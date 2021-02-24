@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Flack</title>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'styles/bootstrap.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'styles/mainpagec.css') }}">
+	{% block linkb %}
+	{% endblock %}
+</head>
+<body>
+	<nav class="navbar navbar-light bg-success" style="top: 0; width: 100%; position: fixed;" >
+  		<span class="navbar-brand mb-0 h1" style="color: white">Welcome to Flack</span>
+	</nav>
+
+	<div style="width:100%;" class="wrapper">
+        <div class="contentWrapper" style="width:100%;">
+        	<div id="leftnav"  class="left-nav" style="width:20%; float:left; position:fixed; height:100%; background-color:#28a745; top: 56px; left: 0px; overflow-y:scroll hidden;">
+        		<div style="top: 56px"></div>
+        		<div id="tableofcontents">
+        			{% block sidebar %}
+        			{% endblock %}
+        		</div>
+        	</div>
+
+        	<div id="content" runat="server" class="content" style="width:80%; float:right;">
+        		<div style="margin-top: 56px;"></div>
+              	<h2 class="heading">{% block bodyheading %}{% endblock %}</h2>
+              	<div>
+              		{% block body %}
+              		{% endblock %}
+              	</div>
+              </div>
+          </div>
+      </div>
+      {% block script %}
+
+      {% endblock %}
+
+	
+</body>
+</html>
